@@ -1,55 +1,6 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-dist/
-build/
-*.egg
-.pytest_cache/
-venv/
-*.venv/
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Docker
-docker-compose.override.yml
-*.dockerignore
 *.log
-*.pid
-*.pid.lock
-*.tar
-*.tar.gz
-
-# IDEs and editors
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Testing and coverage
-.coverage
-coverage.xml
-nosetests.xml
-coverage/
-htmlcov/
-
-# Database
-*.sql
-*.sqlite3
-*.db
-
-# Miscellaneous
-*.swp
-*~
-*.bak
-*.tmp
+node_modules
+package-lock.json
+*.DS_Store
+.vscode
+.env
