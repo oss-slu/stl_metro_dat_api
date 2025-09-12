@@ -6,8 +6,13 @@ Updated with URL encoding for PG password and retries/API version for Kafka.
 
 import os
 import sys
+import pathlib
 import time
 import urllib.parse
+
+# Get the Flask app
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
+from src.write_service.app import app
 
 # Load environment variables
 try:
@@ -125,6 +130,23 @@ def test_postgresql():
             print("Tip: This is usually due to special chars in password; encoding should fix it. Verify PG is running: docker ps")
         return False
 
+def test_flask():
+    """Test basic health of Flask app."""
+    print("Testing Flask app...")
+    
+    try:
+        app.testing = True
+        client = app.test_client()
+        response = client.get("/health")
+        assert response.status_code == 200
+        assert response.get_json() == {"status": "ok"}
+        print("Flask: OK")
+        return True
+        
+    except Exception as e:
+        print(f"Flask failed: {e}")
+        return False
+    
 def main():
     """Run connectivity tests."""
     print("Basic Connectivity Test")
@@ -132,10 +154,12 @@ def main():
     
     kafka_ok = test_kafka()
     postgres_ok = test_postgresql()
+    flask_ok = test_flask()
     
     print("\nResults:")
     print(f"Kafka: {'PASS' if kafka_ok else 'FAIL'}")
     print(f"PostgreSQL: {'PASS' if postgres_ok else 'FAIL'}")
+    print(f"Flask: {'PASS' if flask_ok else 'FAIL'}")
     
     if kafka_ok and postgres_ok:
         print("\nAll tests passed!")
