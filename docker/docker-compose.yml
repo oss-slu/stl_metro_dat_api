@@ -10,7 +10,7 @@ services:
   
   kafka:
     image: confluentinc/cp-kafka:7.4.0
-    depends_on: [zookeeper]
+    depends_on: [ zookeeper ]
     ports:
       - "9092:9092"
     environment:
@@ -42,18 +42,16 @@ services:
   
   postgres:
     image: postgres:14
+    container_name: stl_postgres
+    restart: always
     environment:
       POSTGRES_DB: stl_data
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Welcome@123456
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
-
+      - ../config/pg_init.sql:/docker-entrypoint-initdb.d/pg_init.sql
 volumes:
   pg_data:
-
-networks:
-  kafka-net:
-    driver: bridge
