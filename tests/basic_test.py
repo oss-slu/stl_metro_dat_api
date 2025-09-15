@@ -18,11 +18,11 @@ except ImportError:
 
 # Configuration
 KAFKA_BROKER = os.getenv('KAFKA_BROKER', 'localhost:9092')
-PG_HOST = os.getenv('PG_HOST', 'localhost')
-PG_PORT = os.getenv('PG_PORT', '5432')
-PG_DB = os.getenv('PG_DB', 'stl_data')
-PG_USER = os.getenv('PG_USER', 'postgres')
-PG_PASSWORD = os.getenv('PG_PASSWORD', "Welcome@123456") ## Add your Postgres password
+PG_HOST = os.getenv('POSTGRES_HOST', 'localhost')
+PG_PORT = os.getenv('POSTGRES_PORT', '5432')
+PG_DB = os.getenv('POSTGRES_DB', 'stl_data')
+PG_USER = os.getenv('POSTGRES_USER', 'postgres')
+PG_PASSWORD = os.getenv('POSTGRES_PASSWORD', "Welcome@123456") ## Add your Postgres password
 
 def test_kafka():
     """Test basic Kafka connectivity with retries and explicit API version."""
