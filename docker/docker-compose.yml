@@ -26,9 +26,9 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${PG_PASSWORD}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${PG_PORT}:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
-      - ../config/pg_init.sql:/docker-entrypoint-initdb.d/pg_init.sql
+      - pg_data:/var/lib/postgresql/data # keeps database data stored on your machine, not just inside container
+      - ../config/pg_init.sql:/docker-entrypoint-initdb.d/pg_init.sql # calls pg_init.sql in the docker container
 volumes:
   pg_data:
