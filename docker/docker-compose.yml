@@ -27,5 +27,12 @@ services:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
+  write_service:
+    build:
+      context: ../
+      dockerfile: docker/write_service/Dockerfile
+    ports:
+      - "5050:5050"
+
 volumes:
   pg_data:
