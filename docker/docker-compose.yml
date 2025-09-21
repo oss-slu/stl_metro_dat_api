@@ -30,5 +30,12 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ../config/pg_init.sql:/docker-entrypoint-initdb.d/pg_init.sql
+  write_service:
+    build:
+      context: ../
+      dockerfile: docker/write_service/Dockerfile
+    ports:
+      - "5050:5050"
+
 volumes:
   pg_data:
