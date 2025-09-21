@@ -35,6 +35,9 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 app = Flask(__name__)
 api = Api(app)
 
+# Make sure INFO-level logs (like from the mock consumer) show up
+app.logger.setLevel("INFO")
+
 # Swagger UI configuration
 SWAGGER_URL = '/swagger'  # URL for Swagger UI (e.g., http://localhost:5001/swagger)
 API_URL = '/swagger.json'
@@ -158,6 +161,15 @@ def swagger_spec():
         }
     })
 
+@app.route('/query-stub', methods=['GET'])
+def query_stub():
+    """
+    Placeholder query endpoint required by assignment spec.
+    This does not connect to the database.
+    It just proves that the read_service has a query stub.
+    """
+    return jsonify({"message": "This is a query stub endpoint"})
+
 # Error handler for 404
 @app.errorhandler(404)
 def not_found(error):
@@ -169,4 +181,11 @@ def internal_error(error):
     return jsonify({"error": "Internal server error"}), 500
 
 if __name__ == '__main__':
+    # Import and start the mock Kafka consumer before running Flask.
+    # This ensures that when the read-service starts, it also begins
+    # simulating event consumption in the background.
+    from processors.events import start_mock_consumer
+    start_mock_consumer(app.logger)
+
+    # Run the Flask app (debug mode = True for development only).
     app.run(host='0.0.0.0', port=5001, debug=True)

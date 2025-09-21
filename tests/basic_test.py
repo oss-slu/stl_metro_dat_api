@@ -1,7 +1,7 @@
 """
 Basic connectivity test for Kafka and PostgreSQL.
 Simple, minimal version without complex error handling.
-Updated with URL encoding for PG password and retries/API version for Kafka.
+Updated with URL encoding for PG password, retries/API version for Kafka, and Pytest-compliant assertions.
 """
 
 import os
@@ -22,7 +22,7 @@ PG_HOST = os.getenv('PG_HOST', 'localhost')
 PG_PORT = os.getenv('PG_PORT', '5432')
 PG_DB = os.getenv('PG_DB', 'stl_data')
 PG_USER = os.getenv('PG_USER', 'postgres')
-PG_PASSWORD = os.getenv('PG_PASSWORD', "Welcome@123456") ## Add your Postgres password
+PG_PASSWORD = os.getenv('PG_PASSWORD', "Welcome@123456") # update with pg password if needed
 
 def test_kafka():
     """Test basic Kafka connectivity with retries and explicit API version."""
@@ -60,9 +60,8 @@ def test_kafka():
                 time.sleep(5)
             except Exception as e:
                 print(f"Kafka producer unexpected error: {e}")
-                raise e
-        if not producer_connected:
-            raise NoBrokersAvailable("All producer attempts failed")
+                raise
+        assert producer_connected, "All Kafka producer attempts failed"
         
         consumer_connected = False
         for attempt in range(3):
@@ -84,15 +83,13 @@ def test_kafka():
                 time.sleep(5)
             except Exception as e:
                 print(f"Kafka consumer unexpected error: {e}")
-                raise e
-        if not consumer_connected:
-            raise NoBrokersAvailable("All consumer attempts failed")
+                raise
+        assert consumer_connected, "All Kafka consumer attempts failed"
         
-        return True
     except Exception as e:
         print(f"Kafka failed: {e}")
         print("Tip: Run 'docker-compose logs kafka' to check if broker started. On Windows, ensure WSL2 in Docker Desktop settings.")
-        return False
+        raise
 
 def test_postgresql():
     """Test basic PostgreSQL connectivity with URL-encoded password."""
@@ -102,10 +99,7 @@ def test_postgresql():
         from sqlalchemy import create_engine, text
         
         encoded_password = urllib.parse.quote_plus(PG_PASSWORD)
-        
-        # Create connection URL with encoded password
         engine_url = f"postgresql+psycopg2://{PG_USER}:{encoded_password}@{PG_HOST}:{PG_PORT}/{PG_DB}"
-        #print(f"Using URL: {engine_url}")
         
         engine = create_engine(engine_url)
         
@@ -115,7 +109,6 @@ def test_postgresql():
         
         engine.dispose()
         print("PostgreSQL: OK")
-        return True
         
     except Exception as e:
         print(f"PostgreSQL failed: {e}")
@@ -123,15 +116,28 @@ def test_postgresql():
             print("Tip: Check password in .env and Docker logs. Try 'docker-compose down -v && docker-compose up -d' to reset.")
         elif "could not translate host name" in str(e).lower():
             print("Tip: This is usually due to special chars in password; encoding should fix it. Verify PG is running: docker ps")
-        return False
-    
+        raise
+
 def main():
     """Run connectivity tests."""
     print("Basic Connectivity Test")
     print("=" * 30)
     
-    kafka_ok = test_kafka()
-    postgres_ok = test_postgresql()
+    kafka_ok = False
+    try:
+        test_kafka()
+        kafka_ok = True
+    except AssertionError as e:
+        print(f"Kafka test failed: {e}")
+    except Exception as e:
+        print(f"Kafka test failed with unexpected error: {e}")
+    
+    postgres_ok = False
+    try:
+        test_postgresql()
+        postgres_ok = True
+    except Exception as e:
+        print(f"PostgreSQL test failed: {e}")
     
     print("\nResults:")
     print(f"Kafka: {'PASS' if kafka_ok else 'FAIL'}")
