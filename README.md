@@ -1,4 +1,5 @@
 # STL Metro Data API
+
 **Overview**
 
 The STL Data API project is a centralized, user-friendly platform designed to serve as a proxy for accessing and interacting with public data from various regional and municipal sources, with a focus on the St. Louis region. The project addresses challenges such as inconsistent data formats, lack of standardization, and repetitive efforts in compiling datasets by providing a RESTful API and a foundation for a future web portal. It is built using a CQRS (Command Query Responsibility Segregation) architecture with microservices, leveraging modern technologies for scalability and maintainability.
@@ -33,15 +34,19 @@ The STL Data API project is a centralized, user-friendly platform designed to se
 - VS Code: Recommended IDE with extensions (Python, Docker).
 
 ### Setup Instructions
+
 Detailed setup is in [setup.md](./setup.md). Summary:
+
 1. Clone the repo: `git clone https://github.com/oss-slu/stl_metro_dat_api && cd stl_metro_dat_api`.
 2. Create and activate a virtual environment: `python -m venv venv && source venv/bin/activate` (Windows: `venv\Scripts\activate`).
 3. Install dependencies: `pip install -r requirements.txt`.
 4. Copy `.env.example` to `.env`: `cp .env.example .env` and update variables (e.g., `PG_PASSWORD`).
-5. Start Kafka and PostgreSQL: `docker-compose -f docker/docker-compose.yml up -d`.
-6. Verify setup: Run `python tests/basic_test.py` to confirm Kafka/PG connectivity.
+5. Register a new server in PostgreSQL pgAdmin 4 with port number `5433`
+6. Start Kafka and PostgreSQL: `docker-compose -f docker/docker-compose.yml up -d`.
+7. Verify setup: Run `python tests/basic_test.py` to confirm Kafka/PG connectivity.
 
 ### Project Structure
+
 ```
 stl_metro_dat_api/
 ├── src/                  # Python source code
@@ -58,15 +63,18 @@ stl_metro_dat_api/
 ```
 
 ## Running the Project
-1. Start containers: `docker-compose -f docker/docker-compose.yml up -d`.
+
+1. Start containers: `docker-compose --env-file.env -f docker/docker-compose.yml up -d`.
 2. Run write-side microservice: `cd src/write_service && python app.py`.
 3. Run read-side microservice: `cd src/read_service && python app.py`.
 4. Test endpoints: Use `curl` or Postman (e.g., `curl http://localhost:5000/health`).
 5. View Open API docs: Access Swagger UI at `http://localhost:5001/swagger`.
 
 ## Testing
+
 - Run unit tests: `pytest tests/`.
 - Check connectivity: `python tests/basic_test.py`.
 
 ## Contact
+
 For questions, reach out to the Tech Lead via Slack or GitHub Issues. Report bugs or suggest features in the Issues tab.
