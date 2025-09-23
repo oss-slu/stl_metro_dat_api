@@ -138,6 +138,17 @@ python app.py
 - Expected output: `{"status": "ok"}`.
 - Stop the server: `Ctrl+C`.
 
+Test the Flask skeleton for the read-side microservice.
+
+```bash
+cd src/read_service
+python app.py
+```
+
+- Open a browser or use `curl`: `curl http://localhost:5001/swagger`.
+- Expected output: Swagger opened in browser.
+- Stop the server: `Ctrl+C`.
+
 ### 9. Run Tests
 
 Execute the test suite to ensure the environment is correctly set up.
