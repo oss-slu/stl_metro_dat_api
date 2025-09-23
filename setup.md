@@ -26,6 +26,7 @@ Before starting, ensure you have the following installed on your system:
 ## Step-by-Step Setup
 
 ### 1. Clone the Repository
+
 Clone the project repository to your local machine and navigate to the project directory.
 
 ```bash
@@ -37,6 +38,7 @@ cd stl_metro_dat_api
 - The repository contains the initial structure, including `src/`, `docker/`, `tests/`, and more (see README.md).
 
 ### 2. Set Up Python Virtual Environment
+
 Create and activate a virtual environment to isolate project dependencies.
 
 ```bash
@@ -48,6 +50,7 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 - To deactivate later: Run `deactivate`.
 
 ### 3. Install Python Dependencies
+
 Install the required Python libraries listed in `requirements.txt`.
 
 ```bash
@@ -65,6 +68,7 @@ pip install -r requirements.txt
 - Verify: `pip list` should show installed packages (e.g., `flask==3.0.0`).
 
 ### 4. Configure Environment Variables
+
 Copy the provided `.env.example` file to `.env` and update it with local settings.
 
 ```bash
@@ -76,7 +80,7 @@ Edit `.env` with a text editor (e.g., VS Code). Example content:
 ```env
 KAFKA_BROKER=localhost:9092
 PG_HOST=localhost
-PG_PORT=5432
+PG_PORT=5433
 PG_DB=stl_data
 PG_USER=postgres
 PG_PASSWORD=example_pass
@@ -85,18 +89,31 @@ PG_PASSWORD=example_pass
 - **Note**: Use a secure `PG_PASSWORD` for local development. Do not commit `.env` to Git (it’s ignored via `.gitignore`).
 - These variables configure connections to Kafka and PostgreSQL containers.
 
-### 5. Start Docker Containers
+### 5. Setup PostgreSQL Server
+
+Register a new server in PostgreSQL pgAdmin 4 with port number 5433
+
+- Name: Docker STL API
+- Host name/address: localhost
+- Port: 5433
+- Maintenance database: stl_data
+- Username: postgres
+
+### 6. Start Docker Containers
+
 Use Docker Compose to spin up Kafka (with Zookeeper) and PostgreSQL containers.
 
 ```bash
-docker-compose -f docker/docker-compose.yml up -d
+docker-compose --env-file.env -f docker/docker-compose.yml up -d
 ```
 
 - Verify containers are running: `docker ps` (should list `zookeeper`, `kafka`, and `postgres`).
 - To stop: `docker-compose -f docker/docker-compose.yml down`.
+  - If not initialized correctly, remove volumes when taking down containers: `docker-compose -f docker/docker-compose.yml down -v`
 - If issues occur (e.g., port conflicts), check logs: `docker logs <container_name>`.
 
-### 6. Verify Connectivity
+### 7. Verify Connectivity
+
 Run the connectivity test script to ensure Kafka and PostgreSQL are accessible.
 
 ```bash
@@ -108,7 +125,8 @@ python tests/basic_test.py
   - Connecting to PostgreSQL and executing a sample query.
 - If errors occur, check `.env` settings, ensure Docker containers are running, or consult the Tech Lead.
 
-### 7. Run a Sample Microservice
+### 8. Run a Sample Microservice
+
 Test the Flask skeleton for the write-side microservice.
 
 ```bash
@@ -120,7 +138,7 @@ python app.py
 - Expected output: `{"status": "ok"}`.
 - Stop the server: `Ctrl+C`.
 
-Test the Flask skeleton for the write-side microservice.
+Test the Flask skeleton for the read-side microservice.
 
 ```bash
 cd src/read_service
@@ -131,7 +149,8 @@ python app.py
 - Expected output: Swagger opened in browser.
 - Stop the server: `Ctrl+C`.
 
-### 8. Run Tests
+### 9. Run Tests
+
 Execute the test suite to ensure the environment is correctly set up.
 
 ```bash
@@ -149,4 +168,3 @@ pytest tests/
 - **Commits**: Use clear messages (e.g., `git commit -m "Add Kafka consumer for web data"`).
 - **Pull Requests**: Push your branch (`git push origin feature/your-branch`) and create a PR to `develop`. Assign a reviewer.
 - **Kanban Board**: Check GitHub Projects for assigned issues and sprint tasks.
-

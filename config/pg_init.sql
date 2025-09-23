@@ -1,3 +1,5 @@
+\connect stl_data;
+
 CREATE TABLE test_table(id SERIAL PRIMARY KEY);
 
 CREATE TABLE IF NOT EXISTS snapshots (
