@@ -28,7 +28,14 @@ services:
     ports:
       - "${PG_PORT}:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data # keeps database data stored on your machine, not just inside container
-      - ../config/pg_init.sql:/docker-entrypoint-initdb.d/pg_init.sql # calls pg_init.sql in the docker container
+      - pg_data:/var/lib/postgresql/data
+      - ../config/pg_init.sql:/docker-entrypoint-initdb.d/pg_init.sql
+  write_service:
+    build:
+      context: ../
+      dockerfile: docker/write_service/Dockerfile
+    ports:
+      - "5050:5050"
+
 volumes:
   pg_data:
