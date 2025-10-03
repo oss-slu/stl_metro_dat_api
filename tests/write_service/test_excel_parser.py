@@ -6,7 +6,7 @@ Covers:
 """
 
 import pytest
-from src.write_service.ingestion.excel_parser import read_excel
+from write_service.ingestion.excel_parser import read_excel
 
 
 def test_read_local_file(tmp_path):

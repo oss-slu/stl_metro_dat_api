@@ -59,7 +59,10 @@ def read_excel(source: str, sheet_name: str = None):
 
     # Loop through each requested sheet
     for sheet in sheets_to_read:
-        ws = wb[sheet]   # ws = "worksheet" object
+        try:
+            ws = wb[sheet]   # ws = "worksheet" object
+        except KeyError:
+            raise ValueError(f"Unknown sheet: {sheet}")
 
         # First row in Excel (row 1) is assumed to be column headers
         headers = [cell.value for cell in ws[1]]
@@ -69,6 +72,10 @@ def read_excel(source: str, sheet_name: str = None):
 
         # Start at row 2 (skip header row), read values only (no formatting)
         for row in ws.iter_rows(min_row=2, values_only=True):
+            # Skip fully empty rows (rows containing only None values)
+            if all(cell is None for cell in row):
+                continue
+            
             # Pair headers with row values → turn into dict
             # Example: headers = ["Name","Age"], row = ("Alice", 30)
             # Result: {"Name": "Alice", "Age": 30}
