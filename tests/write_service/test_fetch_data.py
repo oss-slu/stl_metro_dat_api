@@ -2,11 +2,7 @@
 Tests for the write service fetch Python app.
 """
 
-import sys
-import pathlib
-
 # Get the Flask app
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent))
 from src.write_service.ingestion.fetch_data import get_json
 
 # Load environment variables

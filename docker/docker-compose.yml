@@ -35,7 +35,7 @@ services:
       context: ../
       dockerfile: docker/write_service/Dockerfile
     ports:
-      - "5050:5050"
+      - "5000:5000"
 
 volumes:
   pg_data:

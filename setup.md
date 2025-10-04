@@ -108,6 +108,7 @@ docker-compose --env-file.env -f docker/docker-compose.yml up -d
 ```
 
 - Verify containers are running: `docker ps` (should list `zookeeper`, `kafka`, and `postgres`).
+- **Important!** If you make changes to your code, you must update your Docker Containers so Docker can get the newest version of your code. To do this, run: `docker-compose -f docker/docker-compose.yml build`
 - To stop: `docker-compose -f docker/docker-compose.yml down`.
   - If not initialized correctly, remove volumes when taking down containers: `docker-compose -f docker/docker-compose.yml down -v`
 - If issues occur (e.g., port conflicts), check logs: `docker logs <container_name>`.
@@ -129,13 +130,8 @@ python tests/basic_test.py
 
 Test the Flask skeleton for the write-side microservice.
 
-```bash
-cd src/write_service
-python app.py
-```
-
-- Open a browser or use `curl`: `curl http://localhost:5000/health`.
-- Expected output: `{"status": "ok"}`.
+- The write-service app should start automatically with Docker. To run the write-side app without Docker, go to the project's root directory in your terminal, and run `python -m src.write_service.app`.
+- Open a browser and go to `http://localhost:5000/`. A webpage should appear.
 - Stop the server: `Ctrl+C`.
 
 Test the Flask skeleton for the read-side microservice.

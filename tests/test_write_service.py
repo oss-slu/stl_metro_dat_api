@@ -2,11 +2,7 @@
 Tests for the write service Python app.
 """
 
-import sys
-import pathlib
-
 # Get the Flask app
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from src.write_service.app import app
 
 # Load environment variables
