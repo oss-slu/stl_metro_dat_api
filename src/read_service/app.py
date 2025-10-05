@@ -169,7 +169,7 @@ def query_stub():
     It just proves that the read_service has a query stub.
     """
     return jsonify({"message": "This is a query stub endpoint"})
-
+    
 # Error handler for 404
 @app.errorhandler(404)
 def not_found(error):

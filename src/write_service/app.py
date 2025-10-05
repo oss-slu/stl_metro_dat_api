@@ -1,5 +1,7 @@
-from flask import Flask, render_template
-from flask_restful import Api
+import json
+import logging
+from flask import Flask, render_template, render_template_string
+from src.write_service.ingestion.fetch_data import get_json
 
 # This is the Python app for the WRITE service
 app = Flask(__name__)
@@ -7,16 +9,42 @@ app = Flask(__name__)
 @app.route('/')
 def main():
     """For now, we just show a simple webpage."""
-    print("The root directory of the write service has been accessed!")
+    logging.info("The root directory of the write service has been accessed!")
     return render_template("index.html")
+
+@app.route('/json', strict_slashes = False)
+def test_json():
+    """
+    Test function that pulls sample JSON data from the City of St. Louis website and then displays it to the user.
+    """
+
+    # Grab and parse data
+    testURL = "https://www.stlouis-mo.gov/customcf/endpoints/arpa/expenditures.cfm?format=json"
+    result = get_json(testURL)
+
+    # Show to user
+    formattedResult = json.dumps(result, indent=2)
+    html = f"""
+        <html>
+            <head>
+                <title>STL Data API - Write Service - JSON Test</title>
+            </head>
+            <body>
+                <h1>STL Data API - Write Service - JSON Test</h1>
+                <h2>JSON from {testURL}</h2>
+                <pre>{formattedResult}</pre>
+            </body>
+        </html>
+    """
+    return render_template_string(html)
 
 @app.route('/health')
 def health():
     """Endpoint for checking health of this app (if basic endpoint works or not)."""
-    print("Health is okay.")
+    logging.info("Health is okay.")
     return {'status': 'ok'}
 
 if __name__ == '__main__':
     """Called when this app is started."""
-    print("The write service Python app has started.")
-    app.run(host='0.0.0.0', port=5050)
+    logging.info("The write service Python app has started.")
+    app.run(host='0.0.0.0', port=5000)

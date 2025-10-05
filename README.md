@@ -65,10 +65,12 @@ stl_metro_dat_api/
 ## Running the Project
 
 1. Start containers: `docker-compose --env-file.env -f docker/docker-compose.yml up -d`.
-2. Run write-side microservice: `cd src/write_service && python app.py`.
-3. Run read-side microservice: `cd src/read_service && python app.py`.
-4. Test endpoints: Use `curl` or Postman (e.g., `curl http://localhost:5000/health`).
-5. View Open API docs: Access Swagger UI at `http://localhost:5001/swagger`.
+   - The write-service app should start automatically with Docker. To run the write-side app without Docker, go to the project's root directory in your terminal, and run `python -m src.write_service.app`.
+2. Run read-side microservice: `cd src/read_service && python app.py`.
+3. You can view the write-service app by going to `http://localhost:5000/` in your web browser.
+4. View Open API docs: Access Swagger UI at `http://localhost:5001/swagger`.
+
+**Important!** If you make changes to your code, you must update your Docker Containers so Docker can get the newest version of your code. To do this, run: `docker-compose -f docker/docker-compose.yml build`
 
 ## Testing
 
