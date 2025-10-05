@@ -12,3 +12,4 @@ flask-swagger-ui==4.11.1
 pytest==7.4.3
 six==1.16.0
 python-dotenv==1.1.1
+requests-mock==1.11.0
