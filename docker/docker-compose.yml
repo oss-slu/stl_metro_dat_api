@@ -7,6 +7,7 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+  
   kafka:
     image: confluentinc/cp-kafka:7.4.0
     depends_on: [ zookeeper ]
@@ -17,6 +18,28 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    
+  kafka-init:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - kafka
+    entrypoint: [ "/bin/bash", "-c" ]
+    command: |
+      "
+      echo 'Waiting for Kafka to be ready...';
+      sleep 10;
+      echo 'Creating topics: $raw-data-topic, $processed-data-topic';
+      for topic in $(echo $raw-data-topic, $processed-data-topic' | tr ',' '\n'); do
+        kafka-topics --create \
+          --bootstrap-server kafka:$9092 \
+          --replication-factor 1 \
+          --partitions 3 \
+          --topic $topic || true;
+      done
+      "
+    networks:
+      - kafka-net
+  
   postgres:
     image: postgres:14
     container_name: stl_postgres
@@ -39,3 +62,7 @@ services:
 
 volumes:
   pg_data:
+
+networks:
+  kafka-net:
+    driver: bridge
