@@ -21,7 +21,7 @@ def test_extract_text_from_url_pdf():
     assert any(t.strip() for t in text)
 
 def test_local_file_not_found():
-    with pytest.raises(FileNotFoundError):
+    with pytest.raises(Exception, match="Local PDF not found"):
         extract_text_from_pdf("nonexistent_file.pdf")
 
 def test_invalid_url():
