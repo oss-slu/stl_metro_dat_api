@@ -1,7 +1,8 @@
 import json
 import logging
 from flask import Flask, render_template, render_template_string
-from src.write_service.ingestion.fetch_data import get_json
+from src.write_service.ingestion.json_fetcher import get_json
+from src.write_service.processing.json_processor import send_data
 
 # This is the Python app for the WRITE service
 app = Flask(__name__)
@@ -18,11 +19,12 @@ def test_json():
     Test function that pulls sample JSON data from the City of St. Louis website and then displays it to the user.
     """
 
-    # Grab and parse data
+    # Grab and parse data from URL, also send to Kafka
     testURL = "https://www.stlouis-mo.gov/customcf/endpoints/arpa/expenditures.cfm?format=json"
     result = get_json(testURL)
+    kafka_status = send_data(result)
 
-    # Show to user
+    # Display results to user
     formattedResult = json.dumps(result, indent=2)
     html = f"""
         <html>
@@ -32,7 +34,13 @@ def test_json():
             <body>
                 <h1>STL Data API - Write Service - JSON Test</h1>
                 <h2>JSON from {testURL}</h2>
+                <p>
+                    <b>Kafka Status:</b><br>
+                    {kafka_status}
+                <hr><br>
+                <b>Formatted JSON data received from website:</b>
                 <pre>{formattedResult}</pre>
+                </p>
             </body>
         </html>
     """

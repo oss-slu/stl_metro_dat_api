@@ -3,7 +3,7 @@ Tests for the write service fetch Python app.
 """
 
 # Get the Flask app
-from src.write_service.ingestion.fetch_data import get_json
+from src.write_service.ingestion.json_fetcher import get_json
 
 # Load environment variables
 try:
@@ -17,5 +17,6 @@ def test_city_json():
     url = "https://www.stlouis-mo.gov/customcf/endpoints/arpa/expenditures.cfm?format=json"
     result = get_json(url)
 
-    # If the response is a valid Python dictionary, then the JSON data was sucessfully retrieved and parsed
-    assert isinstance(result, dict)
+    # If the response is a valid Python list of dictionaries, then the JSON data was sucessfully retrieved and parsed
+    assert isinstance(result, list), "Result is not a list"
+    assert all(isinstance(item, dict) for item in result), "Not all items inside the list are dictionaries!"
