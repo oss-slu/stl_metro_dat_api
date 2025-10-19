@@ -1,8 +1,12 @@
 # src/write_service/processing/web_processor.py
-
 """
 web_processor.py
 Processes raw web-fetched data by cleaning, validating, and sending it to Kafka.
+
+Public API:
+    clean_data(raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]
+    send_to_kafka(cleaned_data: List[Dict[str, Any]], topic: str = "web-processed-topic") -> None
+    process_and_send(raw_data: List[Dict[str, Any]]) -> None
 """
 
 from typing import List, Dict, Any
@@ -13,9 +17,20 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def clean_data(raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Removes duplicates, strips whitespace, and normalizes text fields.
+    
+    Args:
+        raw_data: List of dictionaries from web_fetcher
+        
+    Returns:
+        Cleaned list with duplicates removed and whitespace stripped
+        
+    Example:
+        Input:  [{"name": " Alice ", "age": "25"}, {"name": "Alice", "age": "25"}]
+        Output: [{"name": "Alice", "age": "25"}]
     """
     if not raw_data:
         return []
@@ -24,6 +39,7 @@ def clean_data(raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     seen = set()
 
     for item in raw_data:
+        # Strip whitespace from string values only
         normalized_item = {
             k: v.strip() if isinstance(v, str) else v
             for k, v in item.items()
@@ -35,12 +51,20 @@ def clean_data(raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             seen.add(item_key)
             cleaned.append(normalized_item)
 
+    logger.info(f"Cleaned {len(raw_data)} rows -> {len(cleaned)} rows (removed {len(raw_data) - len(cleaned)} duplicates)")
     return cleaned
 
 
 def send_to_kafka(cleaned_data: List[Dict[str, Any]], topic: str = "web-processed-topic") -> None:
     """
     Sends cleaned data to a Kafka topic.
+    
+    Args:
+        cleaned_data: List of cleaned dictionaries
+        topic: Kafka topic name (default: "web-processed-topic")
+        
+    Raises:
+        KafkaError: If connection or send fails
     """
     if not cleaned_data:
         logger.warning("No data to send to Kafka.")
@@ -57,18 +81,29 @@ def send_to_kafka(cleaned_data: List[Dict[str, Any]], topic: str = "web-processe
 
     producer.flush()
     producer.close()
+    logger.info(f"Successfully sent {len(cleaned_data)} records to {topic}")
 
 
 def process_and_send(raw_data: List[Dict[str, Any]]) -> None:
     """
-    High-level function:
-    - Cleans raw data
-    - Sends to Kafka
-    - Deletes raw data from memory after successful send
+    High-level function: cleans raw data, sends to Kafka, deletes from memory.
+    
+    This is the main entry point for the processing pipeline.
+    
+    Args:
+        raw_data: List of dictionaries from web_fetcher.fetch_data()
+        
+    Process:
+        1. Clean the data (remove duplicates, strip whitespace)
+        2. Send to Kafka topic
+        3. Delete raw data from memory
     """
+    # Step 1: Clean
     cleaned_data = clean_data(raw_data)
+    
+    # Step 2: Send
     send_to_kafka(cleaned_data)
 
-    # Ensure deletion of raw data
+    # Step 3: Delete raw data from memory (as per acceptance criteria)
     del raw_data
     logger.info("Raw data deleted from memory after successful processing.")

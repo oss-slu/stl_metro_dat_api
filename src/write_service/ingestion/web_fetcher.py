@@ -1,14 +1,15 @@
 # src/write_service/ingestion/web_fetcher.py
 """
-Robust HTML table fetcher module.
+Robust HTML table fetcher module with multi-table support.
 
 Public API:
     fetch_data(url: str, table_selector: str | None = None) -> list[dict[str, Any]]
+    fetch_all_tables(url: str) -> dict[str, list[dict[str, Any]]]
 
 Responsibilities:
 - Fetch HTML content from a given URL.
-- Extract the first (or specified) table element.
-- Parse rows into a list of dicts.
+- Extract single or multiple table elements.
+- Parse rows into structured data.
 - Normalize and type-coerce cell values (numbers, percents, currency).
 """
 
@@ -44,13 +45,17 @@ def _coerce_type(value: Optional[str]) -> Any:
     s = str(value).strip()
     if s == "":
         return ""
+    
+    # Remove currency symbols
     s_no_currency = s.replace("$", "").replace("€", "").replace("£", "")
     s_no_commas = s_no_currency.replace(",", "")
+    # Handle percentages
     if s_no_commas.endswith("%"):
         try:
             return float(s_no_commas.rstrip("%")) / 100.0
         except ValueError:
             return s
+    # Try numeric conversion
     try:
         if _RE_NUMBER.match(s_no_commas):
             return float(s_no_commas) if "." in s_no_commas else int(s_no_commas)
@@ -60,7 +65,13 @@ def _coerce_type(value: Optional[str]) -> Any:
 
 
 def _extract_table(soup: BeautifulSoup, selector: Optional[str]) -> Optional[BeautifulSoup]:
-    """Find and return a <table> element from the page using optional CSS selector."""
+    """
+    Find and return a <table> element from the page using optional CSS selector.
+    
+    Why: Different websites structure tables differently. This function
+    implements a fallback strategy: try custom selector first, then
+    common patterns (id="data", class="data"), finally any table.
+    """
     if selector:
         try:
             table = soup.select_one(selector)
@@ -68,6 +79,8 @@ def _extract_table(soup: BeautifulSoup, selector: Optional[str]) -> Optional[Bea
                 return table
         except Exception as exc:
             logger.warning(f"Ignoring invalid selector '{selector}': {exc}")
+    
+    # Fallback strategy: try common table patterns
     for key in [("table", {"id": "data"}), ("table", {"class": "data"}), ("table", {})]:
         table = soup.find(*key)
         if table:
@@ -75,44 +88,35 @@ def _extract_table(soup: BeautifulSoup, selector: Optional[str]) -> Optional[Bea
     return None
 
 
-def fetch_data(url: str, table_selector: Optional[str] = None) -> List[Dict[str, Any]]:
+def _parse_table(table: BeautifulSoup) -> List[Dict[str, Any]]:
     """
-    Fetch a table from a webpage and parse it into structured data.
-
+    Parse a single HTML table into a list of dictionaries.
+    
+    Why: Separated from fetch_data() to enable reuse. This function
+    handles the core parsing logic: identifying headers, extracting
+    rows, and creating structured data.
+    
     Args:
-        url: Target page URL.
-        table_selector: Optional CSS selector (e.g., "#data" or "table.striped").
-
+        table: BeautifulSoup table element
+        
     Returns:
-        List of dictionaries, one per row.
-
-    Raises:
-        RuntimeError: If the network request fails or times out.
-        ValueError: If no valid table is found.
+        List of row dictionaries with headers as keys
     """
-    logger.info(f"Fetching data from: {url}")
-    try:
-        resp = requests.get(url, timeout=10)
-        resp.raise_for_status()
-    except requests.exceptions.RequestException as exc:
-        raise RuntimeError(f"Failed to fetch {url}: {exc}") from exc
-
-    soup = BeautifulSoup(resp.text, "html.parser")
-    table = _extract_table(soup, table_selector)
-    if not table:
-        raise ValueError(f"No table found for selector: {table_selector}")
-
     # Identify headers
     headers = []
     data_rows = []
     thead = table.find("thead")
+    
     if thead:
+        # Standard table structure: <thead> with <th> elements
         headers = [_clean_text(th) for th in thead.find_all("th")]
         data_rows = table.find("tbody").find_all("tr") if table.find("tbody") else table.find_all("tr")[1:]
     else:
+        # Alternative: first row contains headers
         first_row = table.find("tr")
         if not first_row:
             return []
+        
         maybe_ths = first_row.find_all("th")
         if maybe_ths:
             headers = [_clean_text(th) for th in maybe_ths]
@@ -126,14 +130,148 @@ def fetch_data(url: str, table_selector: Optional[str] = None) -> List[Dict[str,
         cols = row.find_all(["td", "th"])
         if not cols:
             continue
+        
         values = [_clean_text(c) for c in cols]
+        
+        # Pad with None if row has fewer columns than headers
         if len(values) < len(headers):
             values.extend([None] * (len(headers) - len(values)))
+        
+        # Create dictionary with proper headers or fallback column names
         row_dict = {
             headers[i] if i < len(headers) and headers[i] else f"col_{i}": _coerce_type(val)
             for i, val in enumerate(values)
         }
         results.append(row_dict)
 
+    return results
+
+
+def fetch_data(url: str, table_selector: Optional[str] = None) -> List[Dict[str, Any]]:
+    """
+    Fetch a single table from a webpage and parse it into structured data.
+    
+    ARCHITECTURAL DECISION: This function maintains backward compatibility.
+    It returns the FIRST table found on the page.
+    
+    Why: Existing code depends on this signature. Changing it would break
+    all downstream processors. For multi-table support, use fetch_all_tables().
+
+    Args:
+        url: Target page URL.
+        table_selector: Optional CSS selector (e.g., "#data" or "table.striped").
+
+    Returns:
+        List of dictionaries, one per row.
+
+    Raises:
+        RuntimeError: If the network request fails or times out.
+        ValueError: If no valid table is found.
+    """
+    logger.info(f"Fetching data from: {url}")
+    
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+    except requests.exceptions.RequestException as exc:
+        raise RuntimeError(f"Failed to fetch {url}: {exc}") from exc
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    table = _extract_table(soup, table_selector)
+    
+    if not table:
+        raise ValueError(f"No table found for selector: {table_selector}")
+
+    results = _parse_table(table)
     logger.info(f"Fetched {len(results)} rows successfully from {url}")
     return results
+
+
+def fetch_all_tables(url: str, table_prefix: str = "table") -> Dict[str, List[Dict[str, Any]]]:
+    """
+    Fetch ALL tables from a webpage and parse them into structured data.
+    
+    ARCHITECTURAL DECISION: New function for multi-table pages.
+    
+    Use case: St. Louis census pages have multiple tables:
+    - "Population by Race (Total)"
+    - "Population by Race (18 Years and Older)"
+    - "Housing Units"
+    
+    Args:
+        url: Target page URL.
+        table_prefix: Prefix for table keys in returned dict (default: "table")
+
+    Returns:
+        Dictionary mapping table identifiers to parsed data:
+        {
+            "table_0": [{...}, {...}],
+            "table_1": [{...}, {...}],
+            ...
+        }
+        
+        Future enhancement: Use table captions/headings as keys instead of indices
+
+    Raises:
+        RuntimeError: If the network request fails or times out.
+        ValueError: If no tables are found on the page.
+    """
+    logger.info(f"Fetching all tables from: {url}")
+    
+    try:
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+    except requests.exceptions.RequestException as exc:
+        raise RuntimeError(f"Failed to fetch {url}: {exc}") from exc
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    tables = soup.find_all("table")
+    
+    if not tables:
+        raise ValueError(f"No tables found on page: {url}")
+    
+    results = {}
+    for idx, table in enumerate(tables):
+        # Try to find a caption or heading before the table
+        # This makes the keys more meaningful
+        caption = table.find("caption")
+        if caption:
+            key = _clean_text(caption).replace(" ", "_").lower()
+        else:
+            # Look for a heading immediately before the table
+            prev_sibling = table.find_previous_sibling(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+            if prev_sibling:
+                key = _clean_text(prev_sibling).replace(" ", "_").lower()
+            else:
+                key = f"{table_prefix}_{idx}"
+        
+        parsed_data = _parse_table(table)
+        if parsed_data:  # Only include non-empty tables
+            results[key] = parsed_data
+            logger.info(f"Parsed table '{key}' with {len(parsed_data)} rows")
+    
+    logger.info(f"Successfully fetched {len(results)} tables from {url}")
+    return results
+
+
+# Example usage documentation
+if __name__ == "__main__":
+    # Example 1: Single table (backward compatible)
+    url_single = "https://example.com/single-table-page"
+    try:
+        data = fetch_data(url_single)
+        print(f"Fetched {len(data)} rows")
+    except Exception as e:
+        print(f"Error: {e}")
+    
+    # Example 2: Multiple tables (new feature)
+    url_multi = "https://www.stlouis-mo.gov/government/departments/planning/research/census/data/neighborhoods/neighborhood.cfm?number=35&censusYear=2020&comparisonYear=0"
+    try:
+        all_tables = fetch_all_tables(url_multi)
+        for table_name, table_data in all_tables.items():
+            print(f"\nTable: {table_name}")
+            print(f"Rows: {len(table_data)}")
+            if table_data:
+                print(f"Sample row: {table_data[0]}")
+    except Exception as e:
+        print(f"Error: {e}")
