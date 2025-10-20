@@ -79,24 +79,8 @@ def test_fetch_data_timeout(monkeypatch):
         fetch_data("https://example.com/timeout")
 
 
-# ============================================
-# NEW: Integration test with real website
-# ============================================
-
 def test_fetch_real_stlouis_census():
-    """
-    Integration test: Fetch real data from St. Louis census website.
-    
-    This verifies your code works with an actual website, not just mocks.
-    
-    WHY: Proves your web_fetcher works in production conditions.
-    
-    HOW TO RUN:
-        pytest tests/write_service/test_web_fetcher.py::test_fetch_real_stlouis_census -v -s
-    
-    To skip this test (if no internet):
-        pytest tests/write_service/test_web_fetcher.py -v -m "not integration"
-    """
+    # Integration test: Fetch real data from St. Louis census website.
     url = "https://www.stlouis-mo.gov/government/departments/planning/research/census/data/neighborhoods/neighborhood.cfm?number=35&censusYear=2020&comparisonYear=0"
     
     try:
@@ -114,23 +98,3 @@ def test_fetch_real_stlouis_census():
     except Exception as e:
         # Don't fail the test if website is down or structure changed
         pytest.skip(f"Integration test skipped: {e}")
-
-
-# ============================================
-# HOW TO RUN THESE TESTS
-# ============================================
-"""
-From project root:
-
-1. Run all tests:
-   pytest tests/write_service/test_web_fetcher.py -v
-
-2. Run only mock tests (fast, no network):
-   pytest tests/write_service/test_web_fetcher.py -v -m "not integration"
-
-3. Run only the integration test:
-   pytest tests/write_service/test_web_fetcher.py::test_fetch_real_stlouis_census -v -s
-
-4. See what's happening (show print statements):
-   pytest tests/write_service/test_web_fetcher.py -v -s
-"""
