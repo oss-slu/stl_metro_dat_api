@@ -7,7 +7,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
 from src.write_service.ingestion.pdf_fetcher import extract_text_from_pdf
 
 def test_extract_text_from_local_pdf():
-    dummy_pdf_path = "tests/write_service/dummy.pdf"
+    dummy_pdf_path = "tests/fixtures/dummy.pdf"
     text = extract_text_from_pdf(dummy_pdf_path)
     assert isinstance(text, list)
     assert len(text) > 0
