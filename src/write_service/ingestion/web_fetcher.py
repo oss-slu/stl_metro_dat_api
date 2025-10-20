@@ -1,5 +1,6 @@
 # src/write_service/ingestion/web_fetcher.py
 """
+web_fetcher.py - HTML Table Fetcher for St. Louis Data Sources
 Robust HTML table fetcher module with multi-table support.
 
 Public API:
@@ -7,10 +8,10 @@ Public API:
     fetch_all_tables(url: str) -> dict[str, list[dict[str, Any]]]
 
 Responsibilities:
-- Fetch HTML content from a given URL.
-- Extract single or multiple table elements.
-- Parse rows into structured data.
-- Normalize and type-coerce cell values (numbers, percents, currency).
+- Clean data (remove duplicates, strip whitespace)
+- Validate data structure
+- Serialize to JSON and publish to Kafka
+- Manage memory (delete raw data after send)
 """
 
 from typing import Any, List, Optional, Dict
@@ -68,7 +69,7 @@ def _extract_table(soup: BeautifulSoup, selector: Optional[str]) -> Optional[Bea
     """
     Find and return a <table> element from the page using optional CSS selector.
     
-    Why: Different websites structure tables differently. This function
+    Different websites structure tables differently. This function
     implements a fallback strategy: try custom selector first, then
     common patterns (id="data", class="data"), finally any table.
     """
@@ -91,11 +92,7 @@ def _extract_table(soup: BeautifulSoup, selector: Optional[str]) -> Optional[Bea
 def _parse_table(table: BeautifulSoup) -> List[Dict[str, Any]]:
     """
     Parse a single HTML table into a list of dictionaries.
-    
-    Why: Separated from fetch_data() to enable reuse. This function
-    handles the core parsing logic: identifying headers, extracting
-    rows, and creating structured data.
-    
+
     Args:
         table: BeautifulSoup table element
         
@@ -149,20 +146,7 @@ def _parse_table(table: BeautifulSoup) -> List[Dict[str, Any]]:
 
 def fetch_data(url: str, table_selector: Optional[str] = None) -> List[Dict[str, Any]]:
     """
-    Fetch a single table from a webpage and parse it into structured data.
-    
-    ARCHITECTURAL DECISION: This function maintains backward compatibility.
-    It returns the FIRST table found on the page.
-    
-    Why: Existing code depends on this signature. Changing it would break
-    all downstream processors. For multi-table support, use fetch_all_tables().
-
-    Args:
-        url: Target page URL.
-        table_selector: Optional CSS selector (e.g., "#data" or "table.striped").
-
-    Returns:
-        List of dictionaries, one per row.
+    Fetch the first table from a webpage and parse it into structured data.
 
     Raises:
         RuntimeError: If the network request fails or times out.
@@ -188,34 +172,7 @@ def fetch_data(url: str, table_selector: Optional[str] = None) -> List[Dict[str,
 
 
 def fetch_all_tables(url: str, table_prefix: str = "table") -> Dict[str, List[Dict[str, Any]]]:
-    """
-    Fetch ALL tables from a webpage and parse them into structured data.
-    
-    ARCHITECTURAL DECISION: New function for multi-table pages.
-    
-    Use case: St. Louis census pages have multiple tables:
-    - "Population by Race (Total)"
-    - "Population by Race (18 Years and Older)"
-    - "Housing Units"
-    
-    Args:
-        url: Target page URL.
-        table_prefix: Prefix for table keys in returned dict (default: "table")
-
-    Returns:
-        Dictionary mapping table identifiers to parsed data:
-        {
-            "table_0": [{...}, {...}],
-            "table_1": [{...}, {...}],
-            ...
-        }
-        
-        Future enhancement: Use table captions/headings as keys instead of indices
-
-    Raises:
-        RuntimeError: If the network request fails or times out.
-        ValueError: If no tables are found on the page.
-    """
+    # Fetch ALL tables from a webpage and parse them into structured data.
     logger.info(f"Fetching all tables from: {url}")
     
     try:

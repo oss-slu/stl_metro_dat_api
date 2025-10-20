@@ -56,16 +56,6 @@ def clean_data(raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 def send_to_kafka(cleaned_data: List[Dict[str, Any]], topic: str = "web-processed-topic") -> None:
-    """
-    Sends cleaned data to a Kafka topic.
-    
-    Args:
-        cleaned_data: List of cleaned dictionaries
-        topic: Kafka topic name (default: "web-processed-topic")
-        
-    Raises:
-        KafkaError: If connection or send fails
-    """
     if not cleaned_data:
         logger.warning("No data to send to Kafka.")
         return
@@ -85,14 +75,7 @@ def send_to_kafka(cleaned_data: List[Dict[str, Any]], topic: str = "web-processe
 
 
 def process_and_send(raw_data: List[Dict[str, Any]]) -> None:
-    """
-    High-level function: cleans raw data, sends to Kafka, deletes from memory.
-    
-    This is the main entry point for the processing pipeline.
-    
-    Args:
-        raw_data: List of dictionaries from web_fetcher.fetch_data()
-        
+    """       
     Process:
         1. Clean the data (remove duplicates, strip whitespace)
         2. Send to Kafka topic
