@@ -18,7 +18,7 @@ import weakref
 import pandas as pd
 import pytest
 
-from src.write_service.processing.excel_processor import ExcelProcessor
+from write_service.processing.excel_processor import ExcelProcessor
 
 
 class MockProducer:
