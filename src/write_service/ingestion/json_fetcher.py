@@ -4,7 +4,7 @@ import json
 
 def get_json(url):
     """
-    This functions grabs the JSON file from the URL, parses it, and converts it to a Python dictionary.
+    This functions grabs the JSON file from the URL, parses it, and converts it to a Python list of dictionaries.
     """
 
     try:
@@ -15,13 +15,23 @@ def get_json(url):
         # Parse the data
         data = response.json()
 
-        # Convert into Python dictionary
+        result = []
+
+        # Convert into list of Python dictionaries
         if isinstance(data, dict):
-            pass
+            # One entity = wrap dictionary in list
+            result = [data]
         elif isinstance(data, list):
-            data = {"items": data}
+            # Otherwise if list of entities, make sure they are all dictionaries
+            for item in data:
+                if isinstance(item, dict):
+                    result.append(item)
+                else:
+                    # Wrap non-dictionaries into a dictionary
+                    result.append({"data": item})
         else:
-            data = {"value": data}
+            # Wrap single data value in a list of a dictionary
+            result = [{"data": data}]
 
         # Return the data
         logging.info(f"Data received successfully from {url}: \n {data}")
