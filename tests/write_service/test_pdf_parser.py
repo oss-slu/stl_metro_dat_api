@@ -2,9 +2,7 @@ import pytest
 import sys
 import pathlib
 
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent))
-
-from src.write_service.ingestion.pdf_parser import extract_text_from_pdf
+from write_service.ingestion.pdf_parser import extract_text_from_pdf
 
 def test_extract_text_from_local_pdf():
     dummy_pdf_path = "tests/write_service/dummy.pdf"
