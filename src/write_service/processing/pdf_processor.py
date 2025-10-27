@@ -178,6 +178,10 @@ def process_and_send(pdf_id: str, raw_bytes: Any, producer: Any, topic: str = "p
 
 def process_pdf_file(pdf_id: str, source: str, producer: Any, topic: str = "pdf-processed-topic",
                      is_url: bool = False) -> Dict[str, Any]:
+    if not is_url and (source.startswith("http://") or source.startswith("https://")): 
+        is_url = True
+
     pages = pdf_fetcher.extract_text_from_pdf(source, is_url=is_url)
     full_text = "\n".join(pages)
+    
     return process_and_send(pdf_id, full_text, producer, topic)

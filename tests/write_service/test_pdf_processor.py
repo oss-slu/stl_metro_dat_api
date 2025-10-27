@@ -84,3 +84,30 @@ def test_process_pdf_file_with_dummy_pdf(dummy_pdf_path):
 
     assert isinstance(payload.get("entities"), dict)
 
+@pytest.fixture
+def dummy_pdf_web_path():
+    return "https://assets.accessible-digital-documents.com/uploads/2017/01/sample-tables.pdf"
+
+
+def test_process_pdf_file_with_dummy_pdf_web(dummy_pdf_web_path):
+    fake = FakeProducer()
+    pdf_url = dummy_pdf_web_path.strip()  # Always strip trailing/leading spaces
+
+    res = pdf_processor.process_pdf_file(
+        "pdf-dummy-1",
+        pdf_url,
+        fake,
+        topic="pdf-dummy-topic",
+        is_url=True,
+    )
+
+    assert res["pdf_id"] == "pdf-dummy-1"
+    assert res["sent"] is True
+    assert res["tables_count"] >= 0
+
+    topic_sent, payload_bytes = fake.sent[0]
+    assert topic_sent == "pdf-dummy-topic"
+
+    payload = json.loads(payload_bytes.decode("utf-8"))
+    assert payload["pdf_id"] == "pdf-dummy-1"
+    assert isinstance(payload.get("entities"), dict)
